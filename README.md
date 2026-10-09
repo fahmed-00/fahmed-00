@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <img src="./assets/terminal.svg" alt="$ whoami — fateen ahmed, AI / CS student at Illinois Tech, Chicago — into agentic AI and machine learning" width="100%"/>
+  <img src="./assets/whoami.svg" alt="$ whoami — fateen ahmed, AI / CS student at Illinois Tech, Chicago — into agentic AI and machine learning" width="100%"/>
 </p>
 
 ### ✦ toolbox

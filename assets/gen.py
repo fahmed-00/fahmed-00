@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate terminal.svg — the 'whoami' card under the desert-night header.
+"""Generate whoami.svg — the 'whoami' card under the desert-night header.
 
 Drawn the way ascii.rest's desert-night is drawn, so the two read as one piece:
 a 200-column grid (6.4 px cells at 1280 px), each cell one dot from " ·•●",
@@ -271,6 +271,6 @@ SVG = f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{
 </svg>
 """
 
-out = Path(__file__).parent / "terminal.svg"
+out = Path(__file__).parent / "whoami.svg"
 out.write_text(SVG)
 print(f"{out.name} {len(SVG) / 1024:.0f} kB · {len(cells)} dots · typing ends at {CURSOR_T:.1f}s")
