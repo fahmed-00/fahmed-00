@@ -11,14 +11,14 @@ text in the palette's colours.
 Pure stdlib. GitHub renders SVG <img> with CSS animations (no JS): lines type
 out, stars twinkle, a shimmer sweeps the name, sand glints, meteors fall.
 
-Edit NAME / LEFT / RIGHT below, then: python3 assets/gen.py
+Edit LEFT / RIGHT (and optionally NAME) below, then: python3 assets/gen.py
 """
 import math
 from html import escape
 from pathlib import Path
 
 # ── content ────────────────────────────────────────────────────────────────
-NAME = "FATEEN AHMED"
+NAME = ""   # optional dot-matrix banner (letters in FONT below); empty = none
 LEFT = [
     ("$", "whoami", "cmd"),
     (">", "fateen ahmed — ai / cs", "out"),
@@ -47,7 +47,7 @@ TEXT = {"$": "#f5c98e", ">": "#57498a", "cmd": "#b6c3e4", "out": "#f4f6fb",
         "dir": "#a9c4ff", "status": "#ffe2b4"}
 
 # ── grid ───────────────────────────────────────────────────────────────────
-COLS, ROWS = 200, 68
+COLS, ROWS = 200, 48
 CELL = 1280 / COLS                       # 6.4 px, same as the header GIF
 W, H = 1280, round(ROWS * CELL)
 R = {1: 0.85, 2: 1.75, 3: 2.75}          # dot radius for · • ●
@@ -99,7 +99,7 @@ for ch in NAME:
                     for dx in range(SCALE):
                         name_cells.add((x + fx * SCALE + dx, NAME_TOP + fy * SCALE + dy))
     x += len(g[0]) * SCALE + GAP
-name_rows = 7 * SCALE
+name_rows = 7 * SCALE if NAME else 0
 for (c, r) in name_cells:
     t = (r - NAME_TOP) / (name_rows - 1)
     colour = NAME_RAMP[min(len(NAME_RAMP) - 1, int(t * len(NAME_RAMP)))]
@@ -113,7 +113,7 @@ for (c, r) in name_cells:
 
 # ── text layout (kept clear of dots) ───────────────────────────────────────
 FS, CHAR_W, LINE_H = 22, 13.2, 33
-TEXT_TOP = NAME_TOP + name_rows + 9           # first baseline, in rows
+TEXT_TOP = (NAME_TOP + name_rows + 9) if NAME else 10          # first baseline, in rows
 LEFT_X, RIGHT_X = 10 * CELL, 100 * CELL
 clear = set()
 for base_x, lines in ((LEFT_X, LEFT), (RIGHT_X, RIGHT)):
@@ -127,7 +127,7 @@ for base_x, lines in ((LEFT_X, LEFT), (RIGHT_X, RIGHT)):
 
 # ── dunes: a heightfield lit by the town on the right ──────────────────────
 def ridge(c):
-    return 57 + 2.6 * math.sin(c / 19.0 + 0.4) + 1.3 * math.sin(c / 7.3 + 1.1)
+    return 38 + 2.0 * math.sin(c / 19.0 + 0.4) + 1.3 * math.sin(c / 7.3 + 1.1)
 
 
 TOWN_C = (158, 186)
@@ -263,8 +263,8 @@ SVG = f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{
   }}
 </style>
 <rect width="{W}" height="{H}" fill="{GROUND}"/>
-{meteor(1040, 30, 9, 2)}
-{meteor(560, 18, 13, 7)}
+{meteor(1040, 24, 9, 2)}
+{meteor(560, 14, 13, 7)}
 {dots_svg}
 {chr(10).join(text_out)}
 <rect class="cur" x="{cx:.1f}" y="{cy - FS + 2:.1f}" width="8" height="{FS + 2}" fill="#f5c98e"/>
