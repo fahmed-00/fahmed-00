@@ -12,6 +12,7 @@ Pure stdlib. GitHub renders SVG <img> with CSS animations (no JS): lines type
 out, stars twinkle, a shimmer sweeps the name, sand glints, meteors fall.
 
 Edit LEFT / RIGHT (and optionally NAME) below, then: python3 assets/gen.py
+(writes assets/whoami-<hash>.svg and points README.md at it)
 """
 import math
 from html import escape
@@ -271,6 +272,17 @@ SVG = f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{
 </svg>
 """
 
-out = Path(__file__).parent / "whoami.svg"
-out.write_text(SVG)
-print(f"{out.name} {len(SVG) / 1024:.0f} kB · {len(cells)} dots · typing ends at {CURSOR_T:.1f}s")
+# The filename carries a hash of the content: GitHub caches README images by URL,
+# so a new name is the only reliable way to make an edit show up straight away.
+import hashlib
+import re
+
+here = Path(__file__).parent
+name = f"whoami-{hashlib.sha1(SVG.encode()).hexdigest()[:7]}.svg"
+for old in here.glob("whoami*.svg"):
+    if old.name != name:
+        old.unlink()
+(here / name).write_text(SVG)
+readme = here.parent / "README.md"
+readme.write_text(re.sub(r"\./assets/whoami[^\"]*\.svg", f"./assets/{name}", readme.read_text()))
+print(f"{name} {len(SVG) / 1024:.0f} kB · {len(cells)} dots · typing ends at {CURSOR_T:.1f}s · README updated")
