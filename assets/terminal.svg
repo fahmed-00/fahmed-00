@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 260" width="620" height="260" role="img" aria-label="Terminal: fateen ahmed — AI / CS at Illinois Tech, Chicago">
+<style>
+  text { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; font-size: 14px; white-space: pre; }
+  .ln { opacity: 0; animation: show .01s forwards; }
+  @keyframes show { to { opacity: 1 } }
+  .cover { animation: type 1s forwards; }
+  @keyframes type { to { transform: translateX(440px) } }
+  .cur { animation: show .01s forwards, blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0 } }
+  @media (prefers-reduced-motion: reduce) { .ln { opacity: 1; animation: none } .cover { display: none } }
+</style>
+<rect x=".5" y=".5" width="619" height="259" rx="10" fill="#0d1117" stroke="#30363d"/>
+<circle cx="22" cy="18" r="5.5" fill="#ff5f57"/><circle cx="40" cy="18" r="5.5" fill="#febc2e"/><circle cx="58" cy="18" r="5.5" fill="#28c840"/>
+<text x="310.0" y="22" fill="#6e7681" text-anchor="middle" font-size="12">fateen@desert-night: ~</text>
+<g class="ln" style="animation-delay:0.40s"><text x="24" y="58" fill="#ffb454">$</text><text x="44" y="58" fill="#7ee787">whoami</text><rect class="cover" x="40" y="43" width="62" height="20" fill="#0d1117" style="animation-delay:0.40s;animation-duration:0.35s;animation-timing-function:steps(6)"/></g>
+<g class="ln" style="animation-delay:1.30s"><text x="24" y="80" fill="#6e7681">&gt;</text><text x="44" y="80" fill="#e6edf3">fateen ahmed — ai / cs</text><rect class="cover" x="40" y="65" width="197" height="20" fill="#0d1117" style="animation-delay:1.30s;animation-duration:0.66s;animation-timing-function:steps(22)"/></g>
+<g class="ln" style="animation-delay:2.20s"><text x="24" y="102" fill="#ffb454">$</text><text x="44" y="102" fill="#7ee787">cat about.txt</text><rect class="cover" x="40" y="87" width="121" height="20" fill="#0d1117" style="animation-delay:2.20s;animation-duration:0.39s;animation-timing-function:steps(13)"/></g>
+<g class="ln" style="animation-delay:3.10s"><text x="24" y="124" fill="#6e7681">&gt;</text><text x="44" y="124" fill="#c9d1d9">student @ illinois tech · chicago</text><rect class="cover" x="40" y="109" width="289" height="20" fill="#0d1117" style="animation-delay:3.10s;animation-duration:0.99s;animation-timing-function:steps(33)"/></g>
+<g class="ln" style="animation-delay:4.00s"><text x="24" y="146" fill="#6e7681">&gt;</text><text x="44" y="146" fill="#c9d1d9">ml · data pipelines · agents · full-stack</text><rect class="cover" x="40" y="131" width="356" height="20" fill="#0d1117" style="animation-delay:4.00s;animation-duration:1.23s;animation-timing-function:steps(41)"/></g>
+<g class="ln" style="animation-delay:4.90s"><text x="24" y="168" fill="#ffb454">$</text><text x="44" y="168" fill="#7ee787">ls ./interests</text><rect class="cover" x="40" y="153" width="130" height="20" fill="#0d1117" style="animation-delay:4.90s;animation-duration:0.42s;animation-timing-function:steps(14)"/></g>
+<g class="ln" style="animation-delay:5.80s"><text x="24" y="190" fill="#6e7681">&gt;</text><text x="44" y="190" fill="#79c0ff">llm-agents/  network-analysis/  iot/  flutter/</text><rect class="cover" x="40" y="175" width="398" height="20" fill="#0d1117" style="animation-delay:5.80s;animation-duration:1.38s;animation-timing-function:steps(46)"/></g>
+<g class="ln" style="animation-delay:6.70s"><text x="24" y="212" fill="#ffb454">$</text><text x="44" y="212" fill="#7ee787">echo $STATUS</text><rect class="cover" x="40" y="197" width="113" height="20" fill="#0d1117" style="animation-delay:6.70s;animation-duration:0.36s;animation-timing-function:steps(12)"/></g>
+<g class="ln" style="animation-delay:7.60s"><text x="24" y="234" fill="#6e7681">&gt;</text><text x="44" y="234" fill="#ffb454">building things under desert skies ✦</text><rect class="cover" x="40" y="219" width="314" height="20" fill="#0d1117" style="animation-delay:7.60s;animation-duration:1.08s;animation-timing-function:steps(36)"/></g>
+<rect class="cur ln" x="362" y="222" width="8" height="15" fill="#ffb454" style="animation-delay:8.5s"/>
+</svg>
