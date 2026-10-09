@@ -23,8 +23,8 @@ LEFT = [
     ("$", "whoami", "cmd"),
     (">", "fateen ahmed — ai / cs", "out"),
     ("$", "cat about.txt", "cmd"),
-    (">", "student @ illinois tech · chicago", "out"),
-    (">", "into agentic ai & machine learning", "out"),
+    (">", "building agentic ai @ byanat", "out"),
+    (">", "prev: simulation @ amazon", "out"),
 ]
 RIGHT = [
     ("$", "ls ./interests", "cmd"),
@@ -233,7 +233,7 @@ dots_svg = "\n".join(
 )
 
 cx, cy = cursor
-SVG = f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}" role="img" aria-label="whoami: fateen ahmed — AI / CS student at Illinois Tech, Chicago — into agentic AI and machine learning: agentic AI, LLM agents, RAG, tool use, machine learning, deep learning, NLP">
+SVG = f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}" role="img" aria-label="whoami: fateen ahmed — AI / CS — building agentic AI at Byanat, previously simulation at Amazon — interests: agentic AI, LLM agents, RAG, tool use, machine learning, deep learning, NLP">
 <style>
   text {{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; font-size: {FS}px; }}
   .ty {{ opacity: 0; animation: show .01s forwards; }}
