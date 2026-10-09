@@ -1,265 +1,276 @@
 #!/usr/bin/env python3
-"""Generate an animated ASCII 'desert night' SVG + a terminal card SVG for a GitHub profile.
+"""Generate terminal.svg — the 'whoami' card under the desert-night header.
 
-Pure stdlib. GitHub renders SVG <img> with CSS animations (no JS), so everything
-moves with @keyframes. Each glyph gets an explicit x position so the grid stays
-aligned whatever monospace font the viewer has.
+Drawn the way ascii.rest's desert-night is drawn, so the two read as one piece:
+a 200-column grid (6.4 px cells at 1280 px), each cell one dot from " ·•●",
+coloured from desert-night's own palette on its ground colour. The sky is a
+random dither (star dust), the sand an ordered 4×4 Bayer dither. The name is a
+5×7 dot-matrix font made of the same dots; the terminal lines are plain mono
+text in the palette's colours.
+
+Pure stdlib. GitHub renders SVG <img> with CSS animations (no JS): lines type
+out, stars twinkle, a shimmer sweeps the name, sand glints, meteors fall.
+
+Edit NAME / LEFT / RIGHT below, then: python3 assets/gen.py
 """
 import math
-import random
 from html import escape
 from pathlib import Path
 
-random.seed(7)
-
-COLS, ROWS = 120, 46
-CW, CH = 8, 13          # cell size in px
-W, H = COLS * CW, ROWS * CH
-OUT = Path(__file__).parent  # writes next to this script
-
-grid = [[None] * COLS for _ in range(ROWS)]   # (char, color, cls, style)
-
-
-def put(r, c, ch, color, cls="", style=""):
-    if 0 <= r < ROWS and 0 <= c < COLS and ch != " ":
-        grid[r][c] = (ch, color, cls, style)
-
-
-# ── terrain heightfields (row index of the surface; smaller = higher) ──────
-def far_dune(c):
-    return 33 + 1.6 * math.sin(c / 9.0) + 1.1 * math.sin(c / 4.3 + 1.2)
-
-
-def near_dune(c):
-    # tall dune on the left where the acacia stands, a long slope to the right
-    peak = 25 + 0.012 * (c - 30) ** 2
-    return min(44.0, peak + 0.9 * math.sin(c / 5.0))
-
-
-horizon = [far_dune(c) for c in range(COLS)]
-near = [near_dune(c) for c in range(COLS)]
-
-# ── sky: milky way band + stars ────────────────────────────────────────────
-STAR_COLORS = ["#e8ecff", "#cdd6ff", "#fff3d6", "#bfe3ff", "#ffffff"]
-for r in range(ROWS):
-    for c in range(COLS):
-        if r >= horizon[c] - 0.5 or r >= near[c] - 0.5:
-            continue
-        # band runs from bottom-left to top-right
-        d = (r - (30 - c * 0.27)) / 5.5
-        band = math.exp(-d * d)
-        p = random.random()
-        if p < 0.7 * band:
-            ch = random.choice("·.:·∙")
-            put(r, c, ch, random.choice(["#8f86c9", "#a99be0", "#6f7fc4", "#c3b6f0"]),
-                "mw", f"animation-delay:-{random.uniform(0, 9):.1f}s")
-        elif p < 0.7 * band + 0.035:
-            ch = random.choices("·∙•+*✦", weights=[40, 25, 15, 8, 6, 3])[0]
-            cls = "tw" if random.random() < 0.45 else ""
-            style = (f"animation-delay:-{random.uniform(0, 4):.2f}s;"
-                     f"animation-duration:{random.uniform(1.8, 4.5):.2f}s") if cls else ""
-            put(r, c, ch, random.choice(STAR_COLORS), cls, style)
-
-# ── distant town on the horizon ────────────────────────────────────────────
-for c in range(78, 104):
-    r = int(min(horizon[78:104])) - 1
-    if random.random() < 0.55:
-        ch = random.choice("▪▫ı╻▖▗·")
-        put(r, c, ch, random.choice(["#ffb454", "#ffcc80", "#ff9e5e"]), "town",
-            f"animation-delay:-{random.uniform(0, 3):.2f}s;animation-duration:{random.uniform(.6, 2.2):.2f}s")
-        if random.random() < 0.25:
-            put(r - 1, c, "ı", "#ffb454", "town",
-                f"animation-delay:-{random.uniform(0, 3):.2f}s")
-# warm glow above the town
-for c in range(74, 108):
-    for dr in (2, 3):
-        if random.random() < 0.35:
-            put(int(min(horizon[74:108])) - dr - 1, c, "·", "#7a4b3a", "glow")
-
-# ── dunes ──────────────────────────────────────────────────────────────────
-for c in range(COLS):
-    top_far = int(round(horizon[c]))
-    top_near = int(round(near[c]))
-    for r in range(top_far, ROWS):
-        if r >= top_near:
-            break
-        depth = r - top_far
-        ch = "·" if depth < 3 else random.choice("·•")
-        put(r, c, ch, "#3a2f52" if depth < 2 else "#2c2440")
-    for r in range(top_near, ROWS):
-        depth = r - top_near
-        if depth == 0:
-            # ridge line, some grains glint
-            glint = random.random() < 0.22
-            put(r, c, "▁" if not glint else "•", "#b79a7a" if glint else "#6e5a7e",
-                "glint" if glint else "",
-                f"animation-delay:-{random.uniform(0, 6):.2f}s" if glint else "")
-            continue
-        ch = random.choices(" ·•●", weights=[18, 40, 28, 14 + depth * 2])[0]
-        shade = ["#5a4a6e", "#4a3d5e", "#3c3150", "#2f2742"][min(3, depth // 3)]
-        put(r, c, ch, shade)
-
-# ── the acacia on the tall dune ────────────────────────────────────────────
-ACACIA = [
-    "      ▂▄▅▆▆▅▄▃▂▂▃▄▅▆▆▅▄▂      ",
-    "  ▃▅▇██████████████████████▇▅▃ ",
-    " ▀▀▀▀▀▀▀▀▀██▀▀▀▀▀▀▀██▀▀▀▀▀▀▀▀▀  ",
-    "           ╲╲      ╱╱           ",
-    "            ╲╲    ╱╱            ",
-    "             ╲╲  ╱╱             ",
-    "              ╲╲╱╱              ",
-    "               ██               ",
-    "               ██               ",
-    "               ██               ",
+# ── content ────────────────────────────────────────────────────────────────
+NAME = "FATEEN AHMED"
+LEFT = [
+    ("$", "whoami", "cmd"),
+    (">", "fateen ahmed — ai / cs", "out"),
+    ("$", "cat about.txt", "cmd"),
+    (">", "student @ illinois tech · chicago", "out"),
+    (">", "into agentic ai & machine learning", "out"),
 ]
-tree_c0 = 30 - len(ACACIA[0]) // 2
-base_r = int(round(near[30]))
-tree_r0 = base_r - len(ACACIA) + 1
-for i, line in enumerate(ACACIA):
-    for j, ch in enumerate(line):
-        put(tree_r0 + i, tree_c0 + j, ch, "#07060d")
+RIGHT = [
+    ("$", "ls ./interests", "cmd"),
+    (">", "agentic-ai/  llm-agents/  rag/  tool-use/", "dir"),
+    (">", "machine-learning/  deep-learning/  nlp/", "dir"),
+    ("$", "echo $STATUS", "cmd"),
+    (">", "building things under desert skies ✦", "status"),
+]
 
-# ── render ─────────────────────────────────────────────────────────────────
-def render_grid():
-    out = []
-    for r, row in enumerate(grid):
-        y = (r + 1) * CH - 3
-        run, key = [], None
+# ── desert-night's palette (ascii.rest, MIT) ───────────────────────────────
+GROUND = "#04060c"
+SKY_DUST = ["#101830", "#16213f", "#1e2b50", "#283864"]
+BAND = ["#34477a", "#45598f", "#5a6fa6", "#7488bd", "#93a5d2"]
+STARS = ["#b6c3e4", "#d8e0f2", "#f4f6fb", "#cfe0ff", "#fff3dc"]
+NAME_RAMP = ["#fff3dc", "#ffe2b4", "#ffd8a8", "#f5c98e", "#e2a86e", "#c9a3a3", "#a88590"]
+SAND = ["#2a2230", "#3d2f3a", "#56404a", "#735358", "#946a62", "#b6836c"]
+TOWN = ["#ffd8a8", "#ff9a52", "#e07a3e", "#f5c98e"]
+GLOW = ["#2a2230", "#3d2f3a", "#56404a"]
+TEXT = {"$": "#f5c98e", ">": "#57498a", "cmd": "#b6c3e4", "out": "#f4f6fb",
+        "dir": "#a9c4ff", "status": "#ffe2b4"}
 
-        def flush():
-            if not run:
-                return
-            color, cls, style = key
-            xs = " ".join(str(c * CW) for c, _ in run)
-            txt = "".join(escape(ch) for _, ch in run)
-            a = f' class="{cls}"' if cls else ""
-            s = f' style="{style}"' if style else ""
-            out.append(f'<text x="{xs}" y="{y}" fill="{color}"{a}{s}>{txt}</text>')
+# ── grid ───────────────────────────────────────────────────────────────────
+COLS, ROWS = 200, 68
+CELL = 1280 / COLS                       # 6.4 px, same as the header GIF
+W, H = 1280, round(ROWS * CELL)
+R = {1: 0.85, 2: 1.75, 3: 2.75}          # dot radius for · • ●
+BAYER = [v / 16 - 0.47 for v in (0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5)]
 
-        for c, cell in enumerate(row):
-            if cell is None:
-                flush(); run, key = [], None
+
+def hash01(x, y, salt=0):
+    h = (x * 374761393 + y * 668265263 + salt * 2246822519) & 0xFFFFFFFF
+    h = ((h ^ (h >> 13)) * 1274126177) & 0xFFFFFFFF
+    return ((h ^ (h >> 16)) & 0xFFFFFF) / 0xFFFFFF
+
+
+def ordered(v, x, y):
+    """brightness 0..1 → dot level 0..3 through the 4×4 Bayer matrix."""
+    return max(0, min(3, round(v * 3 + BAYER[(x % 4) + (y % 4) * 4])))
+
+
+cells = {}   # (c, r) -> (level, colour, cls, style)
+
+
+def put(c, r, level, colour, cls="", style=""):
+    if 0 <= c < COLS and 0 <= r < ROWS and level > 0:
+        cells[(c, r)] = (level, colour, cls, style)
+
+
+# ── 5×7 dot font ───────────────────────────────────────────────────────────
+FONT = {
+    "F": ["11111", "10000", "10000", "11110", "10000", "10000", "10000"],
+    "A": ["01110", "10001", "10001", "11111", "10001", "10001", "10001"],
+    "T": ["11111", "00100", "00100", "00100", "00100", "00100", "00100"],
+    "E": ["11111", "10000", "10000", "11110", "10000", "10000", "11111"],
+    "N": ["10001", "11001", "10101", "10011", "10001", "10001", "10001"],
+    "H": ["10001", "10001", "10001", "11111", "10001", "10001", "10001"],
+    "M": ["10001", "11011", "10101", "10101", "10001", "10001", "10001"],
+    "D": ["11110", "10001", "10001", "10001", "10001", "10001", "11110"],
+    " ": ["000"] * 7,
+}
+SCALE, GAP, NAME_TOP = 2, 2, 5
+name_w = sum(len(FONT[ch][0]) * SCALE + GAP for ch in NAME) - GAP
+x0 = (COLS - name_w) // 2
+name_cells = set()
+x = x0
+for ch in NAME:
+    g = FONT[ch]
+    for fy, row in enumerate(g):
+        for fx, bit in enumerate(row):
+            if bit == "1":
+                for dy in range(SCALE):
+                    for dx in range(SCALE):
+                        name_cells.add((x + fx * SCALE + dx, NAME_TOP + fy * SCALE + dy))
+    x += len(g[0]) * SCALE + GAP
+name_rows = 7 * SCALE
+for (c, r) in name_cells:
+    t = (r - NAME_TOP) / (name_rows - 1)
+    colour = NAME_RAMP[min(len(NAME_RAMP) - 1, int(t * len(NAME_RAMP)))]
+    put(c, r, 3, colour, "shim", f"animation-delay:{(c - x0) * 0.03:.2f}s")
+# a soft halo of small warm dots around the letters
+for (c, r) in name_cells:
+    for dc, dr in ((-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (1, 1), (1, -1), (-1, 1)):
+        n = (c + dc, r + dr)
+        if n not in name_cells and n not in cells and hash01(*n, 3) < 0.55:
+            put(*n, 1, "#3d3466")
+
+# ── text layout (kept clear of dots) ───────────────────────────────────────
+FS, CHAR_W, LINE_H = 22, 13.2, 33
+TEXT_TOP = NAME_TOP + name_rows + 9           # first baseline, in rows
+LEFT_X, RIGHT_X = 10 * CELL, 100 * CELL
+clear = set()
+for base_x, lines in ((LEFT_X, LEFT), (RIGHT_X, RIGHT)):
+    for i, (_, s, _) in enumerate(lines):
+        y = TEXT_TOP * CELL + i * LINE_H
+        c0 = int(base_x / CELL) - 1
+        c1 = int((base_x + (len(s) + 3) * CHAR_W) / CELL) + 1
+        for r in range(int((y - FS) / CELL) - 1, int(y / CELL) + 2):
+            for c in range(c0, c1 + 1):
+                clear.add((c, r))
+
+# ── dunes: a heightfield lit by the town on the right ──────────────────────
+def ridge(c):
+    return 57 + 2.6 * math.sin(c / 19.0 + 0.4) + 1.3 * math.sin(c / 7.3 + 1.1)
+
+
+TOWN_C = (158, 186)
+for c in range(COLS):
+    top = round(ridge(c))
+    slope = ridge(c + 1) - ridge(c - 1)
+    for r in range(top, ROWS):
+        depth = r - top
+        lit = 0.18 + 0.32 * (c / COLS) ** 2 + (0.18 if slope > 0 else -0.04)
+        v = max(0.0, lit * (1 - depth / 16))
+        lvl = ordered(v + 0.12, c, r)
+        if depth == 0:
+            if hash01(c, r, 7) < 0.2:
+                put(c, r, 2, "#e2bfb4", "glint", f"animation-delay:-{hash01(c, r, 8) * 6:.2f}s")
+            else:
+                put(c, r, 2, SAND[min(5, 3 + int(v * 4))])
+            continue
+        put(c, r, lvl, SAND[min(5, max(0, int(v * 9)))])
+
+# town lights on the far ridge + the warm glow above them
+for c in range(*TOWN_C):
+    top = round(ridge(c)) - 1
+    if hash01(c, 0, 11) < 0.45:
+        put(c, top, 2 if hash01(c, 1, 11) < 0.7 else 3, TOWN[int(hash01(c, 2, 11) * 4)],
+            "town", f"animation-delay:-{hash01(c, 3, 11) * 3:.2f}s;animation-duration:{0.7 + hash01(c, 4, 11) * 1.6:.2f}s")
+mid = sum(TOWN_C) / 2
+for c in range(TOWN_C[0] - 26, min(COLS, TOWN_C[1] + 26)):
+    for r in range(round(ridge(c)) - 12, round(ridge(c)) - 1):
+        if (c, r) in cells:
+            continue
+        d = math.hypot((c - mid) / 30, (r - ridge(c)) / 9)
+        v = max(0.0, 0.42 - 0.42 * d)
+        if v > 0 and hash01(c, r, 13) < v * 1.3:
+            put(c, r, 1, GLOW[min(2, int(v * 6))])
+
+# ── sky: star dust, the milky way band, bright stars ───────────────────────
+for c in range(COLS):
+    sky_bottom = round(ridge(c))
+    for r in range(sky_bottom):
+        if (c, r) in cells or (c, r) in clear or (c, r) in name_cells:
+            continue
+        # the band arcs from the lower left up to the upper right, split by a dust lane
+        d = (r - (44 - c * 0.2)) / 7.5
+        band = math.exp(-d * d) * (0.35 + 0.65 * (c / COLS))
+        lane = math.exp(-((d + 0.15) / 0.22) ** 2) * 0.75
+        band = max(0.0, band * (1 - lane))
+        near_name = (min(abs(c - x0), abs(c - (x0 + name_w))) < 3 or NAME_TOP - 2 < r < NAME_TOP + name_rows + 2) and x0 - 3 < c < x0 + name_w + 3
+        if near_name:
+            band *= 0.25
+        p = hash01(c, r, 1)
+        if p < 0.006:
+            lvl = 3 if hash01(c, r, 2) < 0.3 else 2
+            tw = hash01(c, r, 4) < 0.6
+            put(c, r, lvl, STARS[int(hash01(c, r, 5) * len(STARS))], "tw" if tw else "",
+                f"animation-delay:-{hash01(c, r, 6) * 4:.2f}s;animation-duration:{2 + hash01(c, r, 9) * 3:.2f}s" if tw else "")
+        elif p < 0.006 + 0.55 * band:
+            lvl = 2 if hash01(c, r, 10) < band * 0.5 else 1
+            put(c, r, lvl, BAND[min(4, int(band * 5 + hash01(c, r, 12)))], "mw",
+                f"animation-delay:-{hash01(c, r, 14) * 9:.1f}s")
+        elif p < 0.006 + 0.55 * band + 0.05:
+            put(c, r, 1, SKY_DUST[int(hash01(c, r, 15) * 4)])
+
+# ── typing ─────────────────────────────────────────────────────────────────
+DELAY, CPS, PAUSE = 0.6, 0.032, 0.3
+t = DELAY
+text_out = []
+cursor = None
+for base_x, lines in ((LEFT_X, LEFT), (RIGHT_X, RIGHT)):
+    for i, (p, s, kind) in enumerate(lines):
+        y = TEXT_TOP * CELL + i * LINE_H
+        glyphs = [(p, TEXT[p])] + [(" ", None)] + [(ch, TEXT[kind]) for ch in s]
+        for j, (ch, col) in enumerate(glyphs):
+            if ch == " ":
                 continue
-            ch, color, cls, style = cell
-            k = (color, cls, style)
-            # animated glyphs carry their own delay, so each is its own element
-            if k != key or style:
-                flush(); run, key = [], k
-            run.append((c, ch))
-        flush()
-    return "\n".join(out)
+            text_out.append(f'<text class="ty" x="{base_x + j * CHAR_W:.1f}" y="{y:.1f}" fill="{col}" '
+                            f'style="animation-delay:{t + j * CPS:.2f}s">{escape(ch)}</text>')
+        t += len(glyphs) * CPS + PAUSE
+        cursor = (base_x + len(glyphs) * CHAR_W + 2, y)
+CURSOR_T = t
 
 
-def meteors():
-    trail = "━──····"
-    out = []
-    specs = [  # (start x, start y, period s, delay s)
-        (700, 20, 7.0, 0.5),
-        (420, 10, 11.0, 4.0),
-        (900, 60, 9.0, 7.5),
-    ]
-    for i, (x, y, period, delay) in enumerate(specs):
-        # tail first, head last: the text runs along the direction of travel
-        glyphs = "".join(
-            f'<tspan fill-opacity="{1 - k / len(trail):.2f}">{ch}</tspan>'
-            for k, ch in reversed(list(enumerate(trail)))
-        )
-        out.append(
-            f'<g class="meteor" style="animation-duration:{period}s;animation-delay:{delay}s">'
-            f'<g transform="translate({x} {y}) rotate(152) translate(-64 0)">'
-            f'<text x="0" y="0" fill="#fff8e1" font-size="13">{glyphs}✦</text></g></g>'
-        )
-    return "\n".join(out)
+# ── meteors: a head and a fading tail of dots ──────────────────────────────
+def meteor(x, y, period, delay):
+    dots = []
+    for k in range(9):
+        r = [2.6, 2.1, 1.8, 1.5, 1.2, 1.0, .85, .7, .6][k]
+        op = 1 - k / 9
+        dots.append(f'<circle cx="{x + k * 5.6:.1f}" cy="{y - k * 3.2:.1f}" r="{r}" fill="#f4f6fb" fill-opacity="{op:.2f}"/>')
+    return (f'<g class="meteor" style="animation-duration:{period}s;animation-delay:{delay}s">'
+            + "".join(dots) + "</g>")
 
 
-SKY = f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}" role="img" aria-label="Animated ASCII art: the milky way over a lone acacia on desert dunes, meteors falling">
-<defs>
-  <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0" stop-color="#05060f"/>
-    <stop offset=".55" stop-color="#0d0f24"/>
-    <stop offset=".72" stop-color="#1b1430"/>
-    <stop offset="1" stop-color="#120d1e"/>
-  </linearGradient>
-  <radialGradient id="townglow" cx=".75" cy=".72" r=".25">
-    <stop offset="0" stop-color="#ff9e5e" stop-opacity=".18"/>
-    <stop offset="1" stop-color="#ff9e5e" stop-opacity="0"/>
-  </radialGradient>
-</defs>
+# ── render: one <circle> per dot, grouped by colour/animation ──────────────
+groups = {}
+for (c, r), (lvl, colour, cls, style) in sorted(cells.items(), key=lambda kv: (kv[0][1], kv[0][0])):
+    cx, cy = (c + 0.5) * CELL, (r + 0.5) * CELL
+    circle = f'<circle cx="{cx:.1f}" cy="{cy:.1f}" r="{R[lvl]}"/>'
+    groups.setdefault((colour, cls, style), []).append(circle)
+dots_svg = "\n".join(
+    f'<g fill="{colour}"' + (f' class="{cls}"' if cls else "") + (f' style="{style}"' if style else "") + ">"
+    + "".join(circles) + "</g>"
+    for (colour, cls, style), circles in groups.items()
+)
+
+cx, cy = cursor
+SVG = f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}" role="img" aria-label="whoami: fateen ahmed — AI / CS student at Illinois Tech, Chicago — into agentic AI and machine learning: agentic AI, LLM agents, RAG, tool use, machine learning, deep learning, NLP">
 <style>
-  text {{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; font-size: 12px; white-space: pre; }}
+  text {{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; font-size: {FS}px; }}
+  .ty {{ opacity: 0; animation: show .01s forwards; }}
+  @keyframes show {{ to {{ opacity: 1 }} }}
+  .shim {{ animation: shim 6s ease-in-out infinite; }}
+  @keyframes shim {{ 0%,100% {{ opacity: .78 }} 7% {{ opacity: 1 }} 14% {{ opacity: .78 }} }}
   .tw {{ animation: tw 3s ease-in-out infinite; }}
   @keyframes tw {{ 0%,100% {{ opacity: 1 }} 50% {{ opacity: .15 }} }}
   .mw {{ animation: mw 9s ease-in-out infinite; }}
-  @keyframes mw {{ 0%,100% {{ opacity: .55 }} 50% {{ opacity: .95 }} }}
-  .town {{ animation: town 1.4s steps(2) infinite; }}
-  @keyframes town {{ 0%,100% {{ opacity: 1 }} 50% {{ opacity: .45 }} }}
+  @keyframes mw {{ 0%,100% {{ opacity: .6 }} 50% {{ opacity: 1 }} }}
   .glint {{ animation: glint 6s ease-in-out infinite; }}
   @keyframes glint {{ 0%,85%,100% {{ opacity: .35 }} 92% {{ opacity: 1 }} }}
-  .glow {{ opacity: .6 }}
-  .meteor {{ opacity: 0; animation: fall 8s linear infinite; }}
+  .town {{ animation: town 1.4s steps(2) infinite; }}
+  @keyframes town {{ 0%,100% {{ opacity: 1 }} 50% {{ opacity: .45 }} }}
+  .meteor {{ opacity: 0; animation: fall 9s linear infinite; }}
   @keyframes fall {{
     0%   {{ opacity: 0; transform: translate(0,0) }}
     2%   {{ opacity: 1 }}
-    12%  {{ opacity: 0; transform: translate(-260px,140px) }}
-    100% {{ opacity: 0; transform: translate(-260px,140px) }}
+    11%  {{ opacity: 0; transform: translate(-240px,140px) }}
+    100% {{ opacity: 0; transform: translate(-240px,140px) }}
   }}
-  @media (prefers-reduced-motion: reduce) {{ .tw,.mw,.town,.glint,.meteor {{ animation: none }} }}
-</style>
-<rect width="{W}" height="{H}" fill="url(#sky)"/>
-<rect width="{W}" height="{H}" fill="url(#townglow)"/>
-{meteors()}
-{render_grid()}
-</svg>
-"""
-
-# ── terminal card ──────────────────────────────────────────────────────────
-LINES = [
-    ("$", "whoami", "#7ee787"),
-    (">", "fateen ahmed — ai / cs", "#e6edf3"),
-    ("$", "cat about.txt", "#7ee787"),
-    (">", "student @ illinois tech · chicago", "#c9d1d9"),
-    (">", "ml · data pipelines · agents · full-stack", "#c9d1d9"),
-    ("$", "ls ./interests", "#7ee787"),
-    (">", "llm-agents/  network-analysis/  iot/  flutter/", "#79c0ff"),
-    ("$", "echo $STATUS", "#7ee787"),
-    (">", "building things under desert skies ✦", "#ffb454"),
-]
-CARD_W, LH = 620, 22
-CARD_H = 44 + LH * len(LINES) + 18
-step = 0.9
-rows = []
-for i, (p, txt, color) in enumerate(LINES):
-    y = 44 + LH * i + 14
-    d = 0.4 + i * step
-    n = len(txt)
-    pc = "#6e7681" if p == ">" else "#ffb454"
-    rows.append(
-        f'<g class="ln" style="animation-delay:{d:.2f}s">'
-        f'<text x="24" y="{y}" fill="{pc}">{escape(p)}</text>'
-        f'<text x="44" y="{y}" fill="{color}">{escape(txt)}</text>'
-        f'<rect class="cover" x="40" y="{y - 15}" width="{n * 8.4 + 12:.0f}" height="20" fill="#0d1117" '
-        f'style="animation-delay:{d:.2f}s;animation-duration:{max(.35, n * .03):.2f}s;animation-timing-function:steps({max(1, n)})"/></g>'
-    )
-last_y = 44 + LH * (len(LINES) - 1) + 14
-CARD = f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {CARD_W} {CARD_H}" width="{CARD_W}" height="{CARD_H}" role="img" aria-label="Terminal: fateen ahmed — AI / CS at Illinois Tech, Chicago">
-<style>
-  text {{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; font-size: 14px; white-space: pre; }}
-  .ln {{ opacity: 0; animation: show .01s forwards; }}
-  @keyframes show {{ to {{ opacity: 1 }} }}
-  .cover {{ animation: type 1s forwards; }}
-  @keyframes type {{ to {{ transform: translateX(440px) }} }}
-  .cur {{ animation: show .01s forwards, blink 1s steps(1) infinite; }}
+  .cur {{ opacity: 0; animation: show .01s {CURSOR_T:.2f}s forwards, blink 1s steps(1) {CURSOR_T:.2f}s infinite; }}
   @keyframes blink {{ 50% {{ opacity: 0 }} }}
-  @media (prefers-reduced-motion: reduce) {{ .ln {{ opacity: 1; animation: none }} .cover {{ display: none }} }}
+  @media (prefers-reduced-motion: reduce) {{
+    .ty,.cur {{ opacity: 1; animation: none }}
+    .shim,.tw,.mw,.glint,.town,.meteor {{ animation: none }}
+  }}
 </style>
-<rect x=".5" y=".5" width="{CARD_W - 1}" height="{CARD_H - 1}" rx="10" fill="#0d1117" stroke="#30363d"/>
-<circle cx="22" cy="18" r="5.5" fill="#ff5f57"/><circle cx="40" cy="18" r="5.5" fill="#febc2e"/><circle cx="58" cy="18" r="5.5" fill="#28c840"/>
-<text x="{CARD_W / 2}" y="22" fill="#6e7681" text-anchor="middle" font-size="12">fateen@desert-night: ~</text>
-{chr(10).join(rows)}
-<rect class="cur ln" x="{44 + len(LINES[-1][1]) * 8.4 + 16:.0f}" y="{last_y - 12}" width="8" height="15" fill="#ffb454" style="animation-delay:{0.4 + len(LINES) * step:.1f}s"/>
+<rect width="{W}" height="{H}" fill="{GROUND}"/>
+{meteor(1040, 30, 9, 2)}
+{meteor(560, 18, 13, 7)}
+{dots_svg}
+{chr(10).join(text_out)}
+<rect class="cur" x="{cx:.1f}" y="{cy - FS + 2:.1f}" width="8" height="{FS + 2}" fill="#f5c98e"/>
 </svg>
 """
 
-# header is ascii.rest's desert-night.gif now; the hand-drawn sky is kept but not written
-(OUT / "terminal.svg").write_text(CARD)
-print(f"terminal.svg {len(CARD) / 1024:.1f} kB")
+out = Path(__file__).parent / "terminal.svg"
+out.write_text(SVG)
+print(f"{out.name} {len(SVG) / 1024:.0f} kB · {len(cells)} dots · typing ends at {CURSOR_T:.1f}s")
